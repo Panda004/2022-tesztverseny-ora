@@ -35,5 +35,8 @@ public class App {
         System.out.print("5. feladat: A feladat sorszáma = ");
         int taskNumber = console.readInt();
         System.out.println(testService.getCorrectAnswerStatistic(taskNumber));
+        System.out.println("6. feladat: A versenyzők pontszámának a meghatározása.");
+        fileWriter.printAll(testService.getScores());
+        System.out.println(testService.getOrderedResults());
     }
 }

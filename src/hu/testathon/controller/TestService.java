@@ -1,9 +1,13 @@
 package hu.testathon.controller;
 
+import hu.testathon.model.domain.FinalResult;
 import hu.testathon.model.domain.TestResult;
 import hu.testathon.model.domain.TestValidator;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TestService {
 
@@ -40,7 +44,7 @@ public class TestService {
     public String getCorrectAnswerStatistic(int taskNumber) {
         long count = countCorrectAnswers(taskNumber - 1);
         double percent = count * 100.0 / getCompetitorsCount();
-        return String.format("A feladatra 111 fő, a verenyzők %.2f%% adott helyes válaszat.",
+        return String.format("A feladatra %d fő, a verenyzők %.2f%% adott helyes válaszat.",
                 count, percent);
     }
 
@@ -51,5 +55,52 @@ public class TestService {
                 .count();
     }
 
+    public List<String> getScores(){
+        return createFinalResult().stream()
+                .map(FinalResult::toString)
+                .collect(Collectors.toList());
+    }
+
+    private List<FinalResult> createFinalResult(){
+        return testResults.stream()
+                .map(this::createFinalResult)
+                .collect(Collectors.toList());
+    }
+
+    private FinalResult createFinalResult(TestResult testResult){
+        int score = testValidator.calculateScore(testResult.getAnswers());
+        return new FinalResult(testResult.getId(), score);
+    }
+
+   public String getOrderedResults(){
+        return createOrderedFinalResults().stream()
+                .filter(i -> i.getOrder() <= 3)
+                .map(FinalResult::printOrder)
+                .collect(Collectors.joining("\n"));
+   }
+
+
+    private List<FinalResult> createOrderedFinalResults(){
+        List<FinalResult> sortedFinalResults = createSortedFinalResult();
+        List<FinalResult> orderedFinalResults = new ArrayList<>();
+        int prevOrder = 0, prevScore = 0;
+        for (FinalResult finalResult: sortedFinalResults) {
+            int order = finalResult.getScore() == prevScore
+                ? prevOrder : prevOrder + 1;
+            orderedFinalResults.add(new FinalResult(finalResult, order));
+            prevOrder = order;
+            prevScore = finalResult.getScore();
+        }
+        return orderedFinalResults;
+
+
+   }
+
+
+    public List<FinalResult> createSortedFinalResult(){
+        return createFinalResult().stream()
+                .sorted((i, j) -> j.getScore().compareTo(i.getScore()))
+                .collect(Collectors.toList());
+    }
 
 }
